@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Dashboard + Timer</title>
+  <style>
+    #controls { margin-bottom: 20px; }
+    #vis      { width: 600px; height: 400px; }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <button id="startTimer">start counting</button>
+    <button id="stopTimer" disabled>ending</button>
+    <button id="download">Download log</button>
+  </div>
+
+  <div id="vis"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+
+  <!-- <script>
+    // 全局日志和埋点
+    window.logs = [];
+    window.analytics = {
+      track(evt, p) {
+        console.log('[埋点]', evt, p);
+        window.logs.push({ event: evt, ...p });
+      }
+    };
+
+    // —— Timer 逻辑 —— 
+    let timerStart = null;
+    document.getElementById('startTimer').onclick = () => {
+      timerStart = new Date();
+      analytics.track('timer_start', { ts: timerStart.toISOString() });
+      document.getElementById('startTimer').disabled = true;
+      document.getElementById('stopTimer').disabled  = false;
+    };
+    document.getElementById('stopTimer').onclick = () => {
+      const end = new Date();
+      const ms  = end - timerStart;
+      analytics.track('timer_end', {
+        ts: end.toISOString(),
+        duration_ms: ms
+      });
+      timerStart = null;
+      document.getElementById('startTimer').disabled = false;
+      document.getElementById('stopTimer').disabled  = true;
+    };
+
+    // —— 下载日志按钮 —— 
+    document.getElementById('download').onclick = () => {
+      const data = JSON.stringify(window.logs, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'logs.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    // —— Vega 图表 —— 
+    fetch('dashboard_spec.json')
+      .then(r => r.json())
+      .then(spec => vegaEmbed('#vis', spec, { actions: false }))
+      .catch(console.error);
+  </script> -->
+  <script>
+  window.logs = [];
+  window.analytics = {
+    track(evt, p) {
+      console.log('[seeding]', evt, p);
+      window.logs.push({ event: evt, ...p });
+    }
+  };
+
+  let timerStart = null;
+  document.getElementById('startTimer').onclick = () => {
+    timerStart = new Date();
+    analytics.track('timer_start', { ts: timerStart.toISOString() });
+    document.getElementById('startTimer').disabled = true;
+    document.getElementById('stopTimer').disabled  = false;
+  };
+  document.getElementById('stopTimer').onclick = () => {
+    const end = new Date();
+    const ms  = end - timerStart;
+    analytics.track('timer_end', {
+      ts: end.toISOString(),
+      duration_ms: ms
+    });
+    timerStart = null;
+    document.getElementById('startTimer').disabled = false;
+    document.getElementById('stopTimer').disabled  = true;
+  };
+
+  document.getElementById('download').onclick = () => {
+    const data = JSON.stringify(window.logs, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'logs.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  fetch('dashboard_spec.json')
+    .then(r => r.json())
+    .then(spec => vegaEmbed('#vis', spec, { actions: false }))
+    .then(({ view }) => {
+      view.logLevel(vega.Error);
+
+    })
+    .catch(console.error);
+</script>
+</body>
+</html>
